@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Korean Study Friend",
-  description: "Upload, parse, and review Korean vocabulary with spaced repetition",
+  title: "Gongbu Buddy",
+  description: "Your Korean, from your real life. Screenshot it, build your cards, review with spaced repetition.",
   icons: { icon: "/favicon.svg" },
 };
 
