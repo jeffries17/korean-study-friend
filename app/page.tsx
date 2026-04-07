@@ -70,7 +70,7 @@ export default function DashboardPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
           <BookOpen className="h-6 w-6 text-primary" />
-          Korean Study Friend
+          Gongbu Buddy
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
           Upload screenshots, extract vocab, review with spaced repetition

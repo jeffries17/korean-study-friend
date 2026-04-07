@@ -48,7 +48,7 @@ async function send({ streak, word }: { streak?: number; word?: string } = {}) {
     Start Review →
   </a>
   <p style="font-size:11px;color:#bbb;margin:0">
-    Korean Study Friend · <a href="${appUrl}" style="color:#bbb">Open app</a>
+    Gongbu Buddy · <a href="${appUrl}" style="color:#bbb">Open app</a>
   </p>
 </body>
 </html>`
@@ -59,7 +59,7 @@ async function send({ streak, word }: { streak?: number; word?: string } = {}) {
   })
 
   await transporter.sendMail({
-    from: `"Korean Study Friend 🍜" <${GMAIL_USER}>`,
+    from: `"Gongbu Buddy 🍜" <${GMAIL_USER}>`,
     to: REMINDER_TO,
     subject,
     html,
