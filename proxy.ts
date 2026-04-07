@@ -1,16 +1,21 @@
 import { auth } from "@/auth"
 import { NextResponse } from "next/server"
 
-const authHandler = auth((req) => {
-  const isLoggedIn = !!req.auth
-  const isAuthRoute = req.nextUrl.pathname.startsWith("/api/auth")
+const protectedPaths = ["/dashboard", "/upload", "/review", "/vocab"]
 
-  if (isAuthRoute) return NextResponse.next()
-  if (!isLoggedIn) return NextResponse.redirect(new URL("/login", req.nextUrl))
+const authHandler = auth((req) => {
+  const { pathname } = req.nextUrl
+  const isProtected = protectedPaths.some((p) => pathname.startsWith(p))
+
+  if (isProtected && !req.auth) {
+    return NextResponse.redirect(new URL("/", req.nextUrl))
+  }
+
+  return NextResponse.next()
 })
 
 export const proxy = authHandler
 
 export const proxyConfig = {
-  matcher: ["/((?!login|_next/static|_next/image|favicon\\.svg|favicon\\.ico).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon\\.svg|favicon\\.ico).*)"],
 }
