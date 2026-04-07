@@ -113,7 +113,7 @@ export default function UploadPage() {
       cardIds: vocabCards.map((c) => c.id),
       imagePreview: image ?? undefined,
     })
-    router.push("/")
+    router.push("/dashboard")
   }
 
   const exportableCards = cards.map(({ duplicate: _d, ...c }) => ({
@@ -127,7 +127,7 @@ export default function UploadPage() {
   return (
     <main className="flex-1 container max-w-3xl mx-auto px-4 py-8 space-y-6">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" nativeButton={false} render={<Link href="/" />}>
+        <Button variant="ghost" size="icon" nativeButton={false} render={<Link href="/dashboard" />}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <h1 className="text-xl font-bold">Add Vocabulary</h1>

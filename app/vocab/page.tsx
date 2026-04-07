@@ -65,7 +65,7 @@ export default function VocabPage() {
   return (
     <main className="flex-1 container max-w-4xl mx-auto px-4 py-8 space-y-6">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" nativeButton={false} render={<Link href="/" />}>
+        <Button variant="ghost" size="icon" nativeButton={false} render={<Link href="/dashboard" />}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <h1 className="text-xl font-bold">All Vocabulary</h1>

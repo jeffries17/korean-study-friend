@@ -95,7 +95,7 @@ export default function ReviewPage() {
             <span className="ml-1 opacity-60">(limit: {NEW_CARDS_PER_DAY}/day)</span>
           </p>
         )}
-        <Button nativeButton={false} render={<Link href="/" />} variant="outline">← Back to Dashboard</Button>
+        <Button nativeButton={false} render={<Link href="/dashboard" />} variant="outline">← Back to Dashboard</Button>
       </main>
     )
   }
@@ -113,7 +113,7 @@ export default function ReviewPage() {
             {remainingNewAfter} new card{remainingNewAfter !== 1 ? "s" : ""} queued for tomorrow
           </p>
         )}
-        <Button nativeButton={false} render={<Link href="/" />}>← Back to Dashboard</Button>
+        <Button nativeButton={false} render={<Link href="/dashboard" />}>← Back to Dashboard</Button>
       </main>
     )
   }
@@ -124,7 +124,7 @@ export default function ReviewPage() {
   return (
     <main className="flex-1 container max-w-xl mx-auto px-4 py-8 space-y-6">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" nativeButton={false} render={<Link href="/" />}>
+        <Button variant="ghost" size="icon" nativeButton={false} render={<Link href="/dashboard" />}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
