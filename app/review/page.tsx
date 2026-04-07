@@ -19,34 +19,38 @@ import type { SRSGrade, VocabCard } from "@/lib/types"
 
 export default function ReviewPage() {
   const [queue, setQueue] = useState<VocabCard[]>([])
+  const [allCards, setAllCards] = useState<VocabCard[]>([])
   const [reviewed, setReviewed] = useState(0)
   const [flipped, setFlipped] = useState(false)
+  const [loading, setLoading] = useState(true)
   const total = useRef(0)
   const newCardsSeen = useRef(0)
-  // Track which cards in the current queue started as new (repetitions === 0)
-  const isNew = useRef(false)
 
   useEffect(() => {
-    const seenToday = getNewCardsSeenToday()
-    newCardsSeen.current = seenToday
-    const { queue: q } = buildQueue(getAllCards(), seenToday)
-    total.current = q.length
-    setQueue(q)
+    async function load() {
+      const [cards, seenToday] = await Promise.all([getAllCards(), getNewCardsSeenToday()])
+      newCardsSeen.current = seenToday
+      const { queue: q } = buildQueue(cards, seenToday)
+      total.current = q.length
+      setQueue(q)
+      setAllCards(cards)
+      setLoading(false)
+    }
+    load()
   }, [])
 
   const current = queue[0]
 
   const grade = useCallback(
-    (g: SRSGrade) => {
+    async (g: SRSGrade) => {
       if (!current) return
-      // If this was a new card being introduced, count it
       if (current.srs.repetitions === 0) {
-        incrementNewCardsSeen()
+        await incrementNewCardsSeen()
         newCardsSeen.current += 1
       }
       const updated = scheduleCard(current, g)
-      upsertCard(updated)
-      logReviews(1)
+      await upsertCard(updated)
+      await logReviews(1)
       setReviewed((n) => n + 1)
       setFlipped(false)
       setQueue((q) => q.slice(1))
@@ -67,10 +71,17 @@ export default function ReviewPage() {
     return () => window.removeEventListener("keydown", handler)
   }, [grade])
 
-  const allCards = typeof window !== "undefined" ? getAllCards() : []
   const pendingNew = allCards.filter((c) => c.srs.repetitions === 0).length
   const newCardsInQueue = queue.filter((c) => c.srs.repetitions === 0).length
   const remainingNewAfter = Math.max(0, pendingNew - newCardsInQueue - newCardsSeen.current)
+
+  if (loading) {
+    return (
+      <main className="flex-1 container max-w-xl mx-auto px-4 py-16 text-center">
+        <p className="text-muted-foreground text-sm">Loading…</p>
+      </main>
+    )
+  }
 
   if (total.current === 0) {
     return (

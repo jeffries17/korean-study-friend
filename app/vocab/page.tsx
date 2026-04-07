@@ -14,7 +14,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Separator } from "@/components/ui/separator"
 import { PronounceButton } from "@/components/PronounceButton"
 import { ContextPanel } from "@/components/ContextPanel"
 import { ExportButton } from "@/components/ExportButton"
@@ -31,7 +30,9 @@ export default function VocabPage() {
   const [sortAsc, setSortAsc] = useState(true)
   const [expanded, setExpanded] = useState<string | null>(null)
 
-  useEffect(() => { setCards(getAllCards()) }, [])
+  useEffect(() => {
+    getAllCards().then(setCards)
+  }, [])
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) setSortAsc((a) => !a)
@@ -51,8 +52,8 @@ export default function VocabPage() {
       return (a.createdAt - b.createdAt) * dir
     })
 
-  const remove = (id: string) => {
-    deleteCard(id)
+  const remove = async (id: string) => {
+    await deleteCard(id)
     setCards((c) => c.filter((x) => x.id !== id))
   }
 

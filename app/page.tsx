@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator"
 import { StatsBar } from "@/components/StatsBar"
 import { ActivityHeatmap } from "@/components/ActivityHeatmap"
 import { TopikProgress } from "@/components/TopikProgress"
+import { MigrateButton } from "@/components/MigrateButton"
 import { getAllCards, getAllSessions, getReviewLog, type ReviewLog } from "@/lib/storage"
 import { dueCount, getLearnedCount } from "@/lib/srs"
 import { getStreak, getLongestStreak, getReviewsThisWeek } from "@/lib/stats"
@@ -23,9 +24,13 @@ export default function DashboardPage() {
   const [reminderMsg, setReminderMsg] = useState<string | null>(null)
 
   useEffect(() => {
-    setCards(getAllCards())
-    setSessions(getAllSessions())
-    setLog(getReviewLog())
+    async function load() {
+      const [c, s, l] = await Promise.all([getAllCards(), getAllSessions(), getReviewLog()])
+      setCards(c)
+      setSessions(s)
+      setLog(l)
+    }
+    load()
   }, [])
 
   const due = dueCount(cards)
@@ -177,6 +182,12 @@ export default function DashboardPage() {
           <span className="text-xs text-muted-foreground">{reminderMsg}</span>
         )}
       </div>
+
+      {/* localStorage migration */}
+      <MigrateButton onMigrated={() => {
+        getAllCards().then(setCards)
+        getAllSessions().then(setSessions)
+      }} />
 
       {cards.length === 0 && (
         <div className="text-center py-12 space-y-3">

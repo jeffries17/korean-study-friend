@@ -60,7 +60,7 @@ export default function UploadPage() {
       })
       if (!res.ok) throw new Error("Parsing failed")
       const data = await res.json()
-      const existing = new Set(getAllCards().map((c) => normalize(c.korean)))
+      const existing = new Set((await getAllCards()).map((c) => normalize(c.korean)))
       setCards((prev) => [...prev, ...flagDuplicates(data.cards ?? [], existing)])
     } catch (e) {
       setError("Could not parse image. Check your API key and try again.")
@@ -83,7 +83,7 @@ export default function UploadPage() {
       })
       if (!res.ok) throw new Error("Translation failed")
       const parsed = await res.json()
-      const existing = new Set(getAllCards().map((c) => normalize(c.korean)))
+      const existing = new Set((await getAllCards()).map((c) => normalize(c.korean)))
       const [card] = flagDuplicates([parsed], existing)
       setCards((prev) => [...prev, card])
       setWordInput("")
@@ -95,7 +95,7 @@ export default function UploadPage() {
     }
   }
 
-  const saveSession = () => {
+  const saveSession = async () => {
     const sessionId = generateId()
     const now = Date.now()
     const vocabCards: VocabCard[] = cards.map((c) => ({
@@ -105,8 +105,8 @@ export default function UploadPage() {
       createdAt: now,
       srs: initialSRS(),
     }))
-    vocabCards.forEach(upsertCard)
-    upsertSession({
+    await Promise.all(vocabCards.map(upsertCard))
+    await upsertSession({
       id: sessionId,
       name: effectiveSessionName,
       createdAt: now,

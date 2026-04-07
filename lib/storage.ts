@@ -1,112 +1,120 @@
 import type { VocabCard, StudySession } from "./types"
 
-const CARDS_KEY = "ksf-cards"
-const SESSIONS_KEY = "ksf-sessions"
-
-function getItem<T>(key: string, fallback: T): T {
-  if (typeof window === "undefined") return fallback
-  try {
-    const raw = localStorage.getItem(key)
-    return raw ? (JSON.parse(raw) as T) : fallback
-  } catch {
-    return fallback
-  }
-}
-
-function setItem<T>(key: string, value: T): void {
-  if (typeof window === "undefined") return
-  localStorage.setItem(key, JSON.stringify(value))
-}
-
 // ── Cards ─────────────────────────────────────────────────────────────────────
 
-export function getAllCards(): VocabCard[] {
-  return getItem<VocabCard[]>(CARDS_KEY, [])
+export async function getAllCards(): Promise<VocabCard[]> {
+  const res = await fetch("/api/cards")
+  return res.json()
 }
 
-export function saveCards(cards: VocabCard[]): void {
-  setItem(CARDS_KEY, cards)
+export async function upsertCard(card: VocabCard): Promise<void> {
+  await fetch("/api/cards", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(card),
+  })
 }
 
-export function upsertCard(card: VocabCard): void {
-  const cards = getAllCards()
-  const idx = cards.findIndex((c) => c.id === card.id)
-  if (idx >= 0) {
-    cards[idx] = card
-  } else {
-    cards.push(card)
-  }
-  saveCards(cards)
+export async function deleteCard(id: string): Promise<void> {
+  await fetch(`/api/cards/${id}`, { method: "DELETE" })
 }
 
-export function deleteCard(id: string): void {
-  saveCards(getAllCards().filter((c) => c.id !== id))
+export async function saveCards(cards: VocabCard[]): Promise<void> {
+  await Promise.all(cards.map(upsertCard))
 }
 
-export function getCardsBySession(sessionId: string): VocabCard[] {
-  return getAllCards().filter((c) => c.sessionId === sessionId)
+export function getCardsBySession(sessionId: string, cards: VocabCard[]): VocabCard[] {
+  return cards.filter((c) => c.sessionId === sessionId)
 }
 
 // ── Review log ────────────────────────────────────────────────────────────────
 
-const REVIEW_LOG_KEY = "ksf-review-log"
-
-// Record of YYYY-MM-DD → review count
 export type ReviewLog = Record<string, number>
 
-export function getReviewLog(): ReviewLog {
-  return getItem<ReviewLog>(REVIEW_LOG_KEY, {})
+export async function getReviewLog(): Promise<ReviewLog> {
+  const res = await fetch("/api/review-log")
+  return res.json()
 }
 
-export function logReviews(count: number): void {
+export async function logReviews(count: number): Promise<void> {
   if (count <= 0) return
-  const log = getReviewLog()
-  const today = new Date().toISOString().slice(0, 10)
-  log[today] = (log[today] ?? 0) + count
-  setItem(REVIEW_LOG_KEY, log)
+  await fetch("/api/review-log", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ count }),
+  })
 }
 
 // ── New card daily counter ────────────────────────────────────────────────────
 
-const NEW_CARDS_KEY = "ksf-new-cards-today"
-
-interface NewCardsEntry { date: string; count: number }
-
-export function getNewCardsSeenToday(): number {
-  const entry = getItem<NewCardsEntry | null>(NEW_CARDS_KEY, null)
-  const today = new Date().toISOString().slice(0, 10)
-  return entry?.date === today ? entry.count : 0
+export async function getNewCardsSeenToday(): Promise<number> {
+  const res = await fetch("/api/new-cards-today")
+  const data = await res.json()
+  return data.count
 }
 
-export function incrementNewCardsSeen(): void {
-  const today = new Date().toISOString().slice(0, 10)
-  const current = getNewCardsSeenToday()
-  setItem<NewCardsEntry>(NEW_CARDS_KEY, { date: today, count: current + 1 })
+export async function incrementNewCardsSeen(): Promise<void> {
+  await fetch("/api/new-cards-today", { method: "POST" })
 }
 
 // ── Sessions ──────────────────────────────────────────────────────────────────
 
-export function getAllSessions(): StudySession[] {
-  return getItem<StudySession[]>(SESSIONS_KEY, [])
+export async function getAllSessions(): Promise<StudySession[]> {
+  const res = await fetch("/api/sessions")
+  return res.json()
 }
 
-export function saveSessions(sessions: StudySession[]): void {
-  setItem(SESSIONS_KEY, sessions)
+export async function upsertSession(session: StudySession): Promise<void> {
+  await fetch("/api/sessions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(session),
+  })
 }
 
-export function upsertSession(session: StudySession): void {
-  const sessions = getAllSessions()
-  const idx = sessions.findIndex((s) => s.id === session.id)
-  if (idx >= 0) {
-    sessions[idx] = session
-  } else {
-    sessions.push(session)
-  }
-  saveSessions(sessions)
+export async function deleteSession(id: string): Promise<void> {
+  await fetch(`/api/sessions/${id}`, { method: "DELETE" })
 }
 
-export function deleteSession(id: string): void {
-  // Delete the session and its cards
-  saveSessions(getAllSessions().filter((s) => s.id !== id))
-  saveCards(getAllCards().filter((c) => c.sessionId !== id))
+// ── localStorage migration helper ─────────────────────────────────────────────
+
+export async function migrateFromLocalStorage(): Promise<{ cards: number; sessions: number }> {
+  if (typeof window === "undefined") return { cards: 0, sessions: 0 }
+
+  let cardCount = 0
+  let sessionCount = 0
+
+  try {
+    const rawCards = localStorage.getItem("ksf-cards")
+    if (rawCards) {
+      const cards: VocabCard[] = JSON.parse(rawCards)
+      await Promise.all(cards.map(upsertCard))
+      cardCount = cards.length
+    }
+  } catch {}
+
+  try {
+    const rawSessions = localStorage.getItem("ksf-sessions")
+    if (rawSessions) {
+      const sessions: StudySession[] = JSON.parse(rawSessions)
+      await Promise.all(sessions.map(upsertSession))
+      sessionCount = sessions.length
+    }
+  } catch {}
+
+  try {
+    const rawLog = localStorage.getItem("ksf-review-log")
+    if (rawLog) {
+      const log: ReviewLog = JSON.parse(rawLog)
+      for (const [date, count] of Object.entries(log)) {
+        await fetch("/api/review-log/migrate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ date, count }),
+        })
+      }
+    }
+  } catch {}
+
+  return { cards: cardCount, sessions: sessionCount }
 }
