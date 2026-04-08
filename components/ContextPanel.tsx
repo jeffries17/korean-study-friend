@@ -1,20 +1,29 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Sparkles, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { PronounceButton } from "@/components/PronounceButton"
+import { SpeakableText } from "@/components/SpeakableText"
 
 interface ContextPanelProps {
   korean: string
   english: string
+  cardId?: string
 }
 
-export function ContextPanel({ korean, english }: ContextPanelProps) {
+export function ContextPanel({ korean, english, cardId }: ContextPanelProps) {
   const [content, setContent] = useState("")
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!cardId) return
+    fetch(`/api/context?cardId=${encodeURIComponent(cardId)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (data?.context) setContent(data.context) })
+      .catch(() => {})
+  }, [cardId])
 
   const generate = async () => {
     setLoading(true)
@@ -23,7 +32,7 @@ export function ContextPanel({ korean, english }: ContextPanelProps) {
       const res = await fetch("/api/context", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ korean, english }),
+        body: JSON.stringify({ korean, english, cardId }),
       })
       if (!res.body) return
       const reader = res.body.getReader()
@@ -38,7 +47,6 @@ export function ContextPanel({ korean, english }: ContextPanelProps) {
     }
   }
 
-  // Split lines so we can put pronounce buttons next to Korean-looking lines
   const lines = content.split("\n")
 
   return (
@@ -72,22 +80,14 @@ export function ContextPanel({ korean, english }: ContextPanelProps) {
             <div className="space-y-1 text-sm">
               {lines.map((line, i) => {
                 const hasKorean = /[\uAC00-\uD7A3]/.test(line)
+                const clean = line.replace(/\*\*/g, "").replace(/^\d+\.\s*/, "")
+                const isBold = line.startsWith("**")
                 return (
-                  <div key={i} className="flex items-start gap-1 group">
-                    <span
-                      className={
-                        line.startsWith("**")
-                          ? "font-semibold text-foreground"
-                          : "text-muted-foreground"
-                      }
-                    >
-                      {line.replace(/\*\*/g, "")}
-                    </span>
-                    {hasKorean && (
-                      <span className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                        <PronounceButton text={line.replace(/\*\*/g, "").replace(/^\d+\.\s*/, "")} />
-                      </span>
-                    )}
+                  <div key={i} className={isBold ? "font-semibold text-foreground" : "text-muted-foreground"}>
+                    {hasKorean
+                      ? <SpeakableText text={clean} />
+                      : <span>{line.replace(/\*\*/g, "")}</span>
+                    }
                   </div>
                 )
               })}

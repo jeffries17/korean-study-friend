@@ -2,12 +2,6 @@ import { generateText, Output } from "ai"
 import { anthropic } from "@ai-sdk/anthropic"
 import { z } from "zod"
 
-const CardSchema = z.object({
-  korean: z.string(),
-  english: z.string(),
-  example: z.string(),
-})
-
 export async function POST(req: Request) {
   const { english } = await req.json()
 
@@ -15,23 +9,37 @@ export async function POST(req: Request) {
     return Response.json({ error: "english is required" }, { status: 400 })
   }
 
+  // Free translation via MyMemory API
+  let korean = ""
+  try {
+    const mmRes = await fetch(
+      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(english)}&langpair=en|ko`
+    )
+    const mmData = await mmRes.json()
+    korean = mmData.responseData?.translatedText ?? ""
+  } catch {
+    // fall through to AI fallback
+  }
+
+  // If MyMemory failed or returned garbage, fall back to Haiku
+  if (!korean || korean === english) {
+    const { output } = await generateText({
+      model: anthropic("claude-haiku-4-5"),
+      output: Output.object({
+        schema: z.object({ korean: z.string(), english: z.string(), example: z.string() }),
+      }),
+      system: `You are a Korean language expert. Given an English word or phrase, return the most natural Korean equivalent with a natural example sentence.`,
+      prompt: `Translate to Korean: "${english}"`,
+    })
+    return Response.json(output)
+  }
+
+  // Generate example sentence with Haiku (cheap)
   const { output } = await generateText({
-    model: anthropic("claude-sonnet-4-6"),
-    output: Output.object({ schema: CardSchema }),
-    system: `You are a Korean language expert. Given an English word or phrase, return the most natural Korean equivalent.
-
-Return a JSON object with:
-- korean: the Korean word or phrase (prefer the most natural, commonly used form)
-- english: the English input, cleaned up if needed
-- example: a natural Korean sentence using this word/phrase
-
-Rules:
-- For verbs, use the dictionary form (e.g. 먹다, 가다)
-- Prefer common everyday Korean over formal or archaic forms
-- The example must be a full, natural-sounding Korean sentence
-- No romanization`,
-    prompt: `Translate to Korean: "${english}"`,
+    model: anthropic("claude-haiku-4-5"),
+    output: Output.object({ schema: z.object({ example: z.string() }) }),
+    prompt: `Write one natural Korean sentence using "${korean}" (which means "${english}"). Return JSON with an "example" field.`,
   })
 
-  return Response.json(output)
+  return Response.json({ korean, english, example: output?.example ?? "" })
 }

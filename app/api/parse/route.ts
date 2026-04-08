@@ -23,20 +23,26 @@ export async function POST(req: Request) {
   const base64 = image.replace(/^data:image\/\w+;base64,/, "")
   const mediaType = image.match(/^data:(image\/\w+);base64,/)?.[1] ?? "image/jpeg"
 
-  const { output } = await generateText({
-    model: anthropic("claude-sonnet-4-6"),
-    output: Output.object({ schema: ParsedSchema }),
-    system: PARSE_SYSTEM_PROMPT,
-    messages: [
-      {
-        role: "user",
-        content: [
-          { type: "image", image: base64, mediaType },
-          { type: "text", text: "Extract all Korean vocabulary from this image." },
-        ],
-      },
-    ],
-  })
+  try {
+    const { output } = await generateText({
+      model: anthropic("claude-haiku-4-5"),
+      output: Output.object({ schema: ParsedSchema }),
+      system: PARSE_SYSTEM_PROMPT,
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "image", image: base64, mediaType },
+            { type: "text", text: "Extract all Korean vocabulary from this image." },
+          ],
+        },
+      ],
+    })
 
-  return Response.json(output)
+    return Response.json(output)
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    console.error("[parse] Anthropic error:", message)
+    return Response.json({ error: message }, { status: 500 })
+  }
 }

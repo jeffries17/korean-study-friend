@@ -154,7 +154,7 @@ export default function VocabPage() {
                 {expanded === card.id && (
                   <TableRow key={`${card.id}-ctx`}>
                     <TableCell colSpan={5} className="p-4 bg-muted/20">
-                      <ContextPanel korean={card.korean} english={card.english} />
+                      <ContextPanel korean={card.korean} english={card.english} cardId={card.id} />
                     </TableCell>
                   </TableRow>
                 )}

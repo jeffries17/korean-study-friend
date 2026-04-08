@@ -110,6 +110,19 @@ export async function dbIncrementNewCardsSeen(userId: string): Promise<void> {
   `
 }
 
+// ── Context cache ─────────────────────────────────────────────────────────────
+
+export async function dbGetCardContext(id: string, userId: string): Promise<string | null> {
+  const db = sql()
+  const rows = await db`SELECT context FROM cards WHERE id = ${id} AND user_id = ${userId}`
+  return (rows[0]?.context as string) ?? null
+}
+
+export async function dbSetCardContext(id: string, userId: string, context: string): Promise<void> {
+  const db = sql()
+  await db`UPDATE cards SET context = ${context} WHERE id = ${id} AND user_id = ${userId}`
+}
+
 // ── Row mappers ───────────────────────────────────────────────────────────────
 
 function rowToCard(row: Record<string, unknown>): VocabCard {

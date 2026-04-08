@@ -1,4 +1,6 @@
-import { signIn } from "@/auth"
+import { signIn, auth } from "@/auth"
+import { redirect } from "next/navigation"
+import { SpeakableDemo } from "@/components/SpeakableDemo"
 import {
   BookOpen, Camera, BrainCircuit, Volume2,
   MessageSquare, BarChart2, Flame,
@@ -7,7 +9,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const session = await auth()
+  if (session?.user) redirect("/dashboard")
+
   const signInAction = async () => {
     "use server"
     await signIn("google", { redirectTo: "/dashboard" })
@@ -65,7 +70,16 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <FeatureCard icon={<Camera className="h-5 w-5" />} title="Screenshot Parsing" description="AI reads real-world Korean — subtitles, menus, chat screenshots, signs, textbook pages." />
             <FeatureCard icon={<BrainCircuit className="h-5 w-5" />} title="Spaced Repetition" description="SM-2 algorithm schedules every card at the optimal moment for your memory." />
-            <FeatureCard icon={<Volume2 className="h-5 w-5" />} title="Native Pronunciation" description="Tap any card to hear it spoken aloud. Train your ear, not just your eyes." />
+            <Card className="sm:col-span-2 lg:col-span-1">
+              <CardHeader className="pb-2">
+                <div className="rounded-lg bg-primary/10 p-2 w-fit text-primary mb-1"><Volume2 className="h-5 w-5" /></div>
+                <CardTitle className="text-sm">Word-by-word Pronunciation</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <CardDescription>Hear any sentence spoken aloud with each word highlighted as it plays.</CardDescription>
+                <SpeakableDemo />
+              </CardContent>
+            </Card>
             <FeatureCard icon={<MessageSquare className="h-5 w-5" />} title="Context Sentences" description="Each word comes with natural example sentences generated for that exact word." />
             <FeatureCard icon={<BarChart2 className="h-5 w-5" />} title="TOPIK Progress" description="See how your vocab maps against TOPIK levels as your deck grows." />
             <FeatureCard icon={<Flame className="h-5 w-5" />} title="Daily Streaks" description="A heatmap of your review activity so you can see your habit building over time." />
