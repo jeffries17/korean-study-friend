@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { BookOpen, Upload, List, Flame, Plus, Mail } from "lucide-react"
+import { BookOpen, Upload, List, Flame, Plus, Mail, Dumbbell } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -12,7 +12,7 @@ import { ActivityHeatmap } from "@/components/ActivityHeatmap"
 import { TopikProgress } from "@/components/TopikProgress"
 import { MigrateButton } from "@/components/MigrateButton"
 import { getAllCards, getAllSessions, getReviewLog, type ReviewLog } from "@/lib/storage"
-import { dueCount, getLearnedCount } from "@/lib/srs"
+import { dueCount, getLearnedCount, getStruggleCards } from "@/lib/srs"
 import { getStreak, getLongestStreak, getReviewsThisWeek } from "@/lib/stats"
 import type { StudySession, VocabCard } from "@/lib/types"
 
@@ -34,6 +34,7 @@ export default function DashboardPage() {
   }, [])
 
   const due = dueCount(cards)
+  const struggleCount = getStruggleCards(cards).length
   const recentSessions = [...sessions]
     .sort((a, b) => b.createdAt - a.createdAt)
     .slice(0, 5)
@@ -106,6 +107,28 @@ export default function DashboardPage() {
           </Button>
         </CardContent>
       </Card>
+
+      {/* Struggle practice */}
+      {struggleCount > 0 && (
+        <Card>
+          <CardContent className="flex items-center justify-between py-4">
+            <div className="flex items-center gap-3">
+              <div className="rounded-full bg-muted p-2">
+                <Dumbbell className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <div>
+                <p className="font-semibold text-sm">Struggle Practice</p>
+                <p className="text-xs text-muted-foreground">
+                  {struggleCount} card{struggleCount !== 1 ? "s" : ""} · won&apos;t affect your schedule
+                </p>
+              </div>
+            </div>
+            <Button nativeButton={false} render={<Link href="/practice" />} variant="outline" size="sm">
+              Practice
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Activity heatmap */}
       <Card>
