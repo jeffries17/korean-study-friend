@@ -44,10 +44,9 @@ export default function PracticePage() {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === " ") { e.preventDefault(); setFlipped((f) => !f) }
-      if (e.key === "1") grade(0)
-      if (e.key === "2") grade(3)
-      if (e.key === "3") grade(4)
-      if (e.key === "4") grade(5)
+      if (e.key === "1") grade(3)
+      if (e.key === "2") grade(4)
+      if (e.key === "3") grade(5)
     }
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
@@ -67,7 +66,7 @@ export default function PracticePage() {
         <Dumbbell className="h-12 w-12 text-muted-foreground mx-auto" />
         <h1 className="text-xl font-bold">No struggle cards</h1>
         <p className="text-muted-foreground text-sm">
-          Cards show up here once they&apos;ve been graded Hard or Again enough times to lower their ease factor.
+          Cards show up here once they&apos;ve been graded Forgot enough times to lower their ease factor.
         </p>
         <Button nativeButton={false} render={<Link href="/dashboard" />} variant="outline">
           ← Back to Dashboard
@@ -124,7 +123,7 @@ export default function PracticePage() {
       <SRSControls onGrade={grade} />
 
       <p className="text-center text-[11px] text-muted-foreground">
-        Space to flip · 1 Again · 2 Hard · 3 Good · 4 Easy · grades don&apos;t affect your schedule
+        Space to flip · 1 Forgot · 2 Good · 3 Easy · grades don&apos;t affect your schedule
       </p>
     </main>
   )

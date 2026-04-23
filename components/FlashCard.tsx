@@ -1,9 +1,22 @@
 "use client"
 
+import type { ReactNode } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { PronounceButton } from "@/components/PronounceButton"
 import type { VocabCard } from "@/lib/types"
+
+function highlightWord(sentence: string, word: string): ReactNode {
+  const idx = sentence.indexOf(word)
+  if (idx === -1) return sentence
+  return (
+    <>
+      {sentence.slice(0, idx)}
+      <span className="text-foreground font-medium not-italic">{sentence.slice(idx, idx + word.length)}</span>
+      {sentence.slice(idx + word.length)}
+    </>
+  )
+}
 
 interface FlashCardProps {
   card: VocabCard
@@ -39,7 +52,7 @@ export function FlashCard({ card, index, total, flipped, onFlip }: FlashCardProp
           ) : (
             <div className="space-y-4">
               <p className="text-2xl font-semibold text-primary">{card.english}</p>
-              <p className="text-sm text-muted-foreground italic">{card.example}</p>
+              <p className="text-sm text-muted-foreground italic">{highlightWord(card.example, card.korean)}</p>
               <div className="flex justify-center">
                 <PronounceButton text={card.example} />
               </div>

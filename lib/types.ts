@@ -1,7 +1,7 @@
 export interface SRSData {
   interval: number // days until next review
   repetitions: number // successful review count
-  easeFactor: number // SM-2 ease factor, default 2.5
+  easeFactor: number // kept for DB compatibility, not used in scheduling
   dueDate: number // ms timestamp
   lastReview: number // ms timestamp
 }
@@ -24,7 +24,7 @@ export interface StudySession {
   imagePreview?: string // base64 thumbnail
 }
 
-export type SRSGrade = 0 | 3 | 4 | 5 // 0=Again, 3=Hard, 4=Good, 5=Easy
+export type SRSGrade = 3 | 4 | 5 // 3=Forgot, 4=Good, 5=Easy
 
 export interface ParsedCard {
   korean: string

@@ -1,9 +1,8 @@
 import type { VocabCard, SRSData, SRSGrade } from "./types"
 
-const DEFAULT_EASE_FACTOR = 2.5
-const MIN_EASE_FACTOR = 1.3
-const HARD_MULTIPLIER = 1.2
-const EASY_BONUS = 1.3
+const GOOD_MULTIPLIER = 2.5
+const EASY_MULTIPLIER = 3.5
+const MAX_INTERVAL = 90
 export const DAY_MS = 86_400_000
 
 /** Interval (days) at which a card is considered "learned" for TOPIK purposes */
@@ -16,42 +15,27 @@ export function initialSRS(): SRSData {
   return {
     interval: 0,
     repetitions: 0,
-    easeFactor: DEFAULT_EASE_FACTOR,
+    easeFactor: 2.5, // DB column preserved; not used in scheduling
     dueDate: Date.now(),
     lastReview: 0,
   }
 }
 
-/** SM-2 algorithm. Returns a new card with updated SRS fields. */
 export function scheduleCard(card: VocabCard, grade: SRSGrade): VocabCard {
   const now = Date.now()
   const srs = { ...card.srs }
 
-  if (grade < 3) {
-    // Again — full reset, ease penalty (Anki: -0.20)
+  if (grade === 3) {
+    // Forgot — had to flip it. Full reset.
     srs.repetitions = 0
     srs.interval = 1
-    srs.easeFactor = Math.max(MIN_EASE_FACTOR, srs.easeFactor - 0.2)
   } else {
-    // Hard (3): ease -0.15, Good (4): ease unchanged, Easy (5): ease +0.10
-    const easeDelta = 0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02)
-    srs.easeFactor = Math.max(MIN_EASE_FACTOR, srs.easeFactor + easeDelta)
-
     if (srs.repetitions === 0) {
-      // First pass of a new card
+      // Learning phase: see it again tomorrow (Good) or in 4 days (Easy).
       srs.interval = grade === 5 ? 4 : 1
-    } else if (srs.repetitions === 1) {
-      // Second pass — differentiate early intervals
-      srs.interval = grade === 3 ? 3 : grade === 5 ? 8 : 6
     } else {
-      // Review phase — Anki-style multipliers per grade
-      if (grade === 3) {
-        srs.interval = Math.max(srs.interval + 1, Math.round(srs.interval * HARD_MULTIPLIER))
-      } else if (grade === 5) {
-        srs.interval = Math.round(srs.interval * srs.easeFactor * EASY_BONUS)
-      } else {
-        srs.interval = Math.round(srs.interval * srs.easeFactor)
-      }
+      const multiplier = grade === 5 ? EASY_MULTIPLIER : GOOD_MULTIPLIER
+      srs.interval = Math.min(MAX_INTERVAL, Math.round(srs.interval * multiplier))
     }
     srs.repetitions += 1
   }
@@ -109,24 +93,20 @@ export function buildQueue(
   return { queue: [...reviews, ...newCards], newSlots }
 }
 
-/** Ease factor below which a card is considered a struggle card */
-export const STRUGGLE_EASE_THRESHOLD = 2.0
-
 /**
- * Cards that are struggling:
- * - Low ease factor (repeatedly graded Hard/Again over time), OR
- * - Seen 2+ times but stuck at a short interval (repeated resets)
- * Excludes unseen cards. Sorted hardest-first (lowest ease factor).
+ * Cards that are struggling: seen at least once, in the deck for 7+ days,
+ * but still stuck at a short interval — meaning they've been forgotten repeatedly.
+ * Sorted by interval ascending (shortest = most stuck).
  */
 export function getStruggleCards(cards: VocabCard[]): VocabCard[] {
+  const now = Date.now()
   return cards
-    .filter(
-      (c) =>
-        c.srs.repetitions > 0 &&
-        (c.srs.easeFactor < STRUGGLE_EASE_THRESHOLD ||
-          (c.srs.repetitions >= 2 && c.srs.interval < 7))
-    )
-    .sort((a, b) => a.srs.easeFactor - b.srs.easeFactor)
+    .filter((c) => {
+      if (c.srs.repetitions === 0) return false
+      const ageDays = (now - c.createdAt) / DAY_MS
+      return ageDays > 7 && c.srs.interval <= 3
+    })
+    .sort((a, b) => a.srs.interval - b.srs.interval)
 }
 
 /** Cards with interval >= LEARNED_INTERVAL that haven't lapsed more than 30 days */

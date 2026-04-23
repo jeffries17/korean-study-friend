@@ -5,27 +5,21 @@ import type { SRSGrade } from "@/lib/types"
 
 const GRADES: { grade: SRSGrade; label: string; description: string; className: string }[] = [
   {
-    grade: 0,
-    label: "Again",
-    description: "Didn't know it",
-    className: "border-red-500/40 text-red-400 hover:bg-red-500/10",
-  },
-  {
     grade: 3,
-    label: "Hard",
-    description: "Almost got it",
-    className: "border-orange-500/40 text-orange-400 hover:bg-orange-500/10",
+    label: "Forgot",
+    description: "Had to flip it",
+    className: "border-red-500/40 text-red-400 hover:bg-red-500/10",
   },
   {
     grade: 4,
     label: "Good",
-    description: "Got it with effort",
+    description: "Some idea",
     className: "border-blue-500/40 text-blue-400 hover:bg-blue-500/10",
   },
   {
     grade: 5,
     label: "Easy",
-    description: "Perfect recall",
+    description: "Was sure",
     className: "border-green-500/40 text-green-400 hover:bg-green-500/10",
   },
 ]
@@ -36,7 +30,7 @@ interface SRSControlsProps {
 
 export function SRSControls({ onGrade }: SRSControlsProps) {
   return (
-    <div className="grid grid-cols-4 gap-2 w-full max-w-xl mx-auto">
+    <div className="grid grid-cols-3 gap-2 w-full max-w-xl mx-auto">
       {GRADES.map(({ grade, label, description, className }) => (
         <Button
           key={grade}

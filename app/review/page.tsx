@@ -58,14 +58,13 @@ export default function ReviewPage() {
     [current]
   )
 
-  // Keyboard: Space = flip, 1-4 = grade
+  // Keyboard: Space = flip, 1-3 = grade
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === " ") { e.preventDefault(); setFlipped((f) => !f) }
-      if (e.key === "1") grade(0)
-      if (e.key === "2") grade(3)
-      if (e.key === "3") grade(4)
-      if (e.key === "4") grade(5)
+      if (e.key === "1") grade(3)
+      if (e.key === "2") grade(4)
+      if (e.key === "3") grade(5)
     }
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
@@ -151,7 +150,7 @@ export default function ReviewPage() {
       <SRSControls onGrade={grade} />
 
       <p className="text-center text-[11px] text-muted-foreground">
-        Space to flip · 1 Again · 2 Hard · 3 Good · 4 Easy
+        Space to flip · 1 Forgot · 2 Good · 3 Easy
       </p>
     </main>
   )
