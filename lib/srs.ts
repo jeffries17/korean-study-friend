@@ -11,6 +11,12 @@ export const LEARNED_INTERVAL = 21
 /** Max new (unseen) cards introduced per day */
 export const NEW_CARDS_PER_DAY = 20
 
+/** Target new words per day to learn at a steady pace */
+export const NEW_WORDS_GOAL = 12
+
+/** Milestones (learned-word counts) worth celebrating */
+export const MILESTONES = [25, 50, 100, 250, 500, 1000]
+
 export function initialSRS(): SRSData {
   return {
     interval: 0,

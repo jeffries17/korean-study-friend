@@ -43,7 +43,7 @@ export function FlashCard({ card, index, total, flipped, onFlip }: FlashCardProp
         <CardContent className="p-8 text-center w-full">
           {!flipped ? (
             <div className="space-y-4">
-              <p className="text-4xl font-bold tracking-wide">{card.korean}</p>
+              <p className="text-5xl font-bold tracking-wide">{card.korean}</p>
               <div className="flex justify-center">
                 <PronounceButton text={card.korean} />
               </div>
@@ -51,8 +51,8 @@ export function FlashCard({ card, index, total, flipped, onFlip }: FlashCardProp
             </div>
           ) : (
             <div className="space-y-4">
-              <p className="text-2xl font-semibold text-primary">{card.english}</p>
-              <p className="text-sm text-muted-foreground italic">{highlightWord(card.example, card.korean)}</p>
+              <p className="text-3xl font-semibold text-primary">{card.english}</p>
+              <p className="text-base text-muted-foreground italic">{highlightWord(card.example, card.korean)}</p>
               <div className="flex justify-center">
                 <PronounceButton text={card.example} />
               </div>

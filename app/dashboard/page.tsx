@@ -10,8 +10,10 @@ import { Separator } from "@/components/ui/separator"
 import { StatsBar } from "@/components/StatsBar"
 import { ActivityHeatmap } from "@/components/ActivityHeatmap"
 import { TopikProgress } from "@/components/TopikProgress"
+import { Milestones } from "@/components/Milestones"
+import { NewWordsProgress } from "@/components/NewWordsProgress"
 import { MigrateButton } from "@/components/MigrateButton"
-import { getAllCards, getAllSessions, getReviewLog, type ReviewLog } from "@/lib/storage"
+import { getAllCards, getAllSessions, getReviewLog, getNewCardsSeenToday, type ReviewLog } from "@/lib/storage"
 import { dueCount, getLearnedCount, getStruggleCards } from "@/lib/srs"
 import { getStreak, getLongestStreak, getReviewsThisWeek } from "@/lib/stats"
 import type { StudySession, VocabCard } from "@/lib/types"
@@ -20,21 +22,29 @@ export default function DashboardPage() {
   const [cards, setCards] = useState<VocabCard[]>([])
   const [sessions, setSessions] = useState<StudySession[]>([])
   const [log, setLog] = useState<ReviewLog>({})
+  const [newWordsToday, setNewWordsToday] = useState(0)
   const [sendingReminder, setSendingReminder] = useState(false)
   const [reminderMsg, setReminderMsg] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
-      const [c, s, l] = await Promise.all([getAllCards(), getAllSessions(), getReviewLog()])
+      const [c, s, l, n] = await Promise.all([
+        getAllCards(),
+        getAllSessions(),
+        getReviewLog(),
+        getNewCardsSeenToday(),
+      ])
       setCards(c)
       setSessions(s)
       setLog(l)
+      setNewWordsToday(n)
     }
     load()
   }, [])
 
   const due = dueCount(cards)
   const struggleCount = getStruggleCards(cards).length
+  const unseenAvailable = cards.filter((c) => c.srs.repetitions === 0).length
   const recentSessions = [...sessions]
     .sort((a, b) => b.createdAt - a.createdAt)
     .slice(0, 5)
@@ -43,15 +53,7 @@ export default function DashboardPage() {
     setSendingReminder(true)
     setReminderMsg(null)
     try {
-      const pool = cards.length > 0 ? cards : []
-      const word = pool.length > 0
-        ? pool[Math.floor(Math.random() * pool.length)].korean
-        : undefined
-      const res = await fetch("/api/remind", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ streak, word }),
-      })
+      const res = await fetch("/api/remind", { method: "POST" })
       const data = await res.json()
       setReminderMsg(data.ok ? `Sent to ${data.sentTo}` : data.error)
     } catch {
@@ -108,6 +110,9 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
+      {/* New words progress */}
+      <NewWordsProgress seenToday={newWordsToday} unseenAvailable={unseenAvailable} />
+
       {/* Struggle practice */}
       {struggleCount > 0 && (
         <Card>
@@ -142,6 +147,9 @@ export default function DashboardPage() {
 
       {/* TOPIK progress */}
       <TopikProgress learnedCount={getLearnedCount(cards)} totalCount={cards.length} />
+
+      {/* Milestones */}
+      <Milestones learnedCount={getLearnedCount(cards)} />
 
       {/* Quick actions */}
       <div className="grid grid-cols-2 gap-3">
