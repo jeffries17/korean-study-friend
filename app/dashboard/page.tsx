@@ -13,7 +13,7 @@ import { TopikProgress } from "@/components/TopikProgress"
 import { Milestones } from "@/components/Milestones"
 import { NewWordsProgress } from "@/components/NewWordsProgress"
 import { MigrateButton } from "@/components/MigrateButton"
-import { getAllCards, getAllSessions, getReviewLog, getNewCardsSeenToday, type ReviewLog } from "@/lib/storage"
+import { getAllCards, getAllSessions, getReviewLog, type ReviewLog } from "@/lib/storage"
 import { dueCount, getLearnedCount, getStruggleCards } from "@/lib/srs"
 import { getStreak, getLongestStreak, getReviewsThisWeek } from "@/lib/stats"
 import type { StudySession, VocabCard } from "@/lib/types"
@@ -22,29 +22,23 @@ export default function DashboardPage() {
   const [cards, setCards] = useState<VocabCard[]>([])
   const [sessions, setSessions] = useState<StudySession[]>([])
   const [log, setLog] = useState<ReviewLog>({})
-  const [newWordsToday, setNewWordsToday] = useState(0)
   const [sendingReminder, setSendingReminder] = useState(false)
   const [reminderMsg, setReminderMsg] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
-      const [c, s, l, n] = await Promise.all([
-        getAllCards(),
-        getAllSessions(),
-        getReviewLog(),
-        getNewCardsSeenToday(),
-      ])
+      const [c, s, l] = await Promise.all([getAllCards(), getAllSessions(), getReviewLog()])
       setCards(c)
       setSessions(s)
       setLog(l)
-      setNewWordsToday(n)
     }
     load()
   }, [])
 
   const due = dueCount(cards)
   const struggleCount = getStruggleCards(cards).length
-  const unseenAvailable = cards.filter((c) => c.srs.repetitions === 0).length
+  const todayStart = new Date().setHours(0, 0, 0, 0)
+  const addedToday = cards.filter((c) => c.createdAt >= todayStart).length
   const recentSessions = [...sessions]
     .sort((a, b) => b.createdAt - a.createdAt)
     .slice(0, 5)
@@ -111,7 +105,7 @@ export default function DashboardPage() {
       </Card>
 
       {/* New words progress */}
-      <NewWordsProgress seenToday={newWordsToday} unseenAvailable={unseenAvailable} />
+      <NewWordsProgress addedToday={addedToday} />
 
       {/* Struggle practice */}
       {struggleCount > 0 && (

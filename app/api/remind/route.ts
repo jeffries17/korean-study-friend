@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer"
-import { dbGetAllCards, dbGetReviewLog, dbGetNewCardsSeenToday } from "@/lib/db"
+import { dbGetAllCards, dbGetReviewLog } from "@/lib/db"
 import { getDueCards, getStruggleCards, NEW_WORDS_GOAL } from "@/lib/srs"
 import { getStreak } from "@/lib/stats"
 
@@ -19,16 +19,17 @@ async function send() {
     return Response.json({ error: "Email env vars not configured" }, { status: 500 })
   }
 
-  const [cards, log, newWordsToday] = await Promise.all([
+  const [cards, log] = await Promise.all([
     dbGetAllCards(REMINDER_TO),
     dbGetReviewLog(REMINDER_TO),
-    dbGetNewCardsSeenToday(REMINDER_TO),
   ])
 
   const streak = getStreak(log)
   const dueCards = getDueCards(cards)
   const dueTotal = dueCards.length
   const struggleCount = getStruggleCards(cards).length
+  const todayStart = new Date().setHours(0, 0, 0, 0)
+  const addedToday = cards.filter((c) => c.createdAt >= todayStart).length
   // Most overdue card, if any — otherwise the next new (unseen) card.
   const word = dueCards[0]?.korean ?? cards.find((c) => c.srs.repetitions === 0)?.korean
 
@@ -46,7 +47,7 @@ async function send() {
 
   const statLine = `<p style="font-size:13px;color:#555;margin:0 0 20px">
       ${dueTotal > 0 ? `<strong>${dueTotal}</strong> due for review` : "Nothing due for review"}
-      · <strong>${newWordsToday}/${NEW_WORDS_GOAL}</strong> new words learned today
+      · <strong>${addedToday}/${NEW_WORDS_GOAL}</strong> words added today
       ${struggleCount > 0 ? `· <strong>${struggleCount}</strong> struggling` : ""}
      </p>`
 

@@ -7,23 +7,15 @@ import { Button } from "@/components/ui/button"
 import { NEW_WORDS_GOAL } from "@/lib/srs"
 
 interface NewWordsProgressProps {
-  seenToday: number
-  unseenAvailable: number
+  addedToday: number
 }
 
-export function NewWordsProgress({ seenToday, unseenAvailable }: NewWordsProgressProps) {
-  const target = Math.min(NEW_WORDS_GOAL, seenToday + unseenAvailable)
-  const pct = target > 0 ? Math.min(100, Math.round((seenToday / NEW_WORDS_GOAL) * 100)) : 0
-  const met = seenToday >= NEW_WORDS_GOAL
-
-  let nudge: string
-  if (met) {
-    nudge = "Goal hit for today — nice work."
-  } else if (unseenAvailable === 0) {
-    nudge = "No new cards left to learn — upload more vocab to keep pace."
-  } else {
-    nudge = `${Math.min(unseenAvailable, NEW_WORDS_GOAL - seenToday)} more available today.`
-  }
+export function NewWordsProgress({ addedToday }: NewWordsProgressProps) {
+  const pct = Math.min(100, Math.round((addedToday / NEW_WORDS_GOAL) * 100))
+  const met = addedToday >= NEW_WORDS_GOAL
+  const nudge = met
+    ? "Goal hit for today — nice work."
+    : `Add ${NEW_WORDS_GOAL - addedToday} more to hit today's goal.`
 
   return (
     <Card>
@@ -35,12 +27,12 @@ export function NewWordsProgress({ seenToday, unseenAvailable }: NewWordsProgres
             </div>
             <div>
               <p className="font-semibold text-sm">
-                New words today: {seenToday}/{NEW_WORDS_GOAL}
+                Added today: {addedToday}/{NEW_WORDS_GOAL}
               </p>
               <p className="text-xs text-muted-foreground">{nudge}</p>
             </div>
           </div>
-          {!met && unseenAvailable === 0 && (
+          {!met && (
             <Button nativeButton={false} render={<Link href="/upload" />} variant="outline" size="sm">
               Upload
             </Button>

@@ -1,8 +1,10 @@
 "use client"
 
 import type { ReactNode } from "react"
+import { X } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { PronounceButton } from "@/components/PronounceButton"
 import type { VocabCard } from "@/lib/types"
 
@@ -24,9 +26,10 @@ interface FlashCardProps {
   total: number
   flipped: boolean
   onFlip: () => void
+  onDelete?: () => void
 }
 
-export function FlashCard({ card, index, total, flipped, onFlip }: FlashCardProps) {
+export function FlashCard({ card, index, total, flipped, onFlip, onDelete }: FlashCardProps) {
   return (
     <div className="w-full max-w-xl mx-auto">
       <div className="flex items-center justify-between mb-3 text-sm text-muted-foreground">
@@ -37,9 +40,22 @@ export function FlashCard({ card, index, total, flipped, onFlip }: FlashCardProp
       </div>
 
       <Card
-        className="cursor-pointer select-none min-h-[220px] flex items-center justify-center transition-all hover:border-primary/40"
+        className="relative cursor-pointer select-none min-h-[220px] flex items-center justify-center transition-all hover:border-primary/40"
         onClick={onFlip}
       >
+        {onDelete && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation()
+              if (confirm(`Delete "${card.korean}" from your collection?`)) onDelete()
+            }}
+            className="absolute top-2 right-2 h-7 w-7 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
         <CardContent className="p-8 text-center w-full">
           {!flipped ? (
             <div className="space-y-4">

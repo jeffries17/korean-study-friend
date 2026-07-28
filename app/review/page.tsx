@@ -10,6 +10,7 @@ import { SRSControls } from "@/components/SRSControls"
 import {
   getAllCards,
   upsertCard,
+  deleteCard,
   logReviews,
   getNewCardsSeenToday,
   incrementNewCardsSeen,
@@ -57,6 +58,14 @@ export default function ReviewPage() {
     },
     [current]
   )
+
+  const removeCard = useCallback(async () => {
+    if (!current) return
+    await deleteCard(current.id)
+    setAllCards((c) => c.filter((x) => x.id !== current.id))
+    setQueue((q) => q.slice(1))
+    total.current = Math.max(0, total.current - 1)
+  }, [current])
 
   // Keyboard: Space = flip, 1-3 = grade
   useEffect(() => {
@@ -145,7 +154,14 @@ export default function ReviewPage() {
         </div>
       </div>
 
-      <FlashCard card={current} index={reviewed} total={total.current} flipped={flipped} onFlip={() => setFlipped((f) => !f)} />
+      <FlashCard
+        card={current}
+        index={reviewed}
+        total={total.current}
+        flipped={flipped}
+        onFlip={() => setFlipped((f) => !f)}
+        onDelete={removeCard}
+      />
 
       <SRSControls onGrade={grade} />
 

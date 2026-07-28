@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { FlashCard } from "@/components/FlashCard"
 import { SRSControls } from "@/components/SRSControls"
-import { getAllCards } from "@/lib/storage"
+import { getAllCards, deleteCard } from "@/lib/storage"
 import { getStruggleCards } from "@/lib/srs"
 import type { SRSGrade, VocabCard } from "@/lib/types"
 
@@ -40,6 +40,13 @@ export default function PracticePage() {
     },
     [current]
   )
+
+  const removeCard = useCallback(async () => {
+    if (!current) return
+    await deleteCard(current.id)
+    setQueue((q) => q.slice(1))
+    total.current = Math.max(0, total.current - 1)
+  }, [current])
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -118,7 +125,14 @@ export default function PracticePage() {
         </div>
       </div>
 
-      <FlashCard card={current} index={reviewed} total={total.current} flipped={flipped} onFlip={() => setFlipped((f) => !f)} />
+      <FlashCard
+        card={current}
+        index={reviewed}
+        total={total.current}
+        flipped={flipped}
+        onFlip={() => setFlipped((f) => !f)}
+        onDelete={removeCard}
+      />
 
       <SRSControls onGrade={grade} />
 
