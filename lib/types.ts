@@ -36,3 +36,21 @@ export interface ParsedCard {
 export interface DraftCard extends ParsedCard {
   duplicate?: boolean
 }
+
+export interface ConceptDrill {
+  prompt: string // Korean sentence with a blank, e.g. "어머니__ 만나요"
+  answer: string // correct fill, e.g. "를"
+  distractors: string[] // wrong choices shown alongside answer
+  gloss: string // English translation of the completed sentence
+}
+
+export interface Concept {
+  id: string
+  title: string // e.g. "Object marker 을/를"
+  explanation: string // short rule explanation shown before practice
+  pattern: string // e.g. "[noun]+을/를 + verb"
+  sourceLabel: string // e.g. "Lesson 2026-03-23"
+  drills: ConceptDrill[]
+  createdAt: number
+  srs: SRSData
+}

@@ -1,7 +1,7 @@
 import { auth } from "@/auth"
 import { NextResponse } from "next/server"
 
-const protectedPaths = ["/dashboard", "/upload", "/review", "/vocab"]
+const protectedPaths = ["/dashboard", "/upload", "/review", "/vocab", "/concepts"]
 
 const authHandler = auth((req) => {
   const { pathname } = req.nextUrl

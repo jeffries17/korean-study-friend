@@ -1,5 +1,5 @@
 import { neon } from "@neondatabase/serverless"
-import type { VocabCard, StudySession } from "./types"
+import type { VocabCard, StudySession, Concept } from "./types"
 
 function sql() {
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is not set")
@@ -110,6 +110,45 @@ export async function dbIncrementNewCardsSeen(userId: string): Promise<void> {
   `
 }
 
+// ── Concepts ──────────────────────────────────────────────────────────────────
+
+export async function dbGetAllConcepts(userId: string): Promise<Concept[]> {
+  const db = sql()
+  const rows = await db`SELECT * FROM concepts WHERE user_id = ${userId} ORDER BY created_at ASC`
+  return rows.map(rowToConcept)
+}
+
+export async function dbUpsertConcept(concept: Concept, userId: string): Promise<void> {
+  const db = sql()
+  await db`
+    INSERT INTO concepts (id, title, explanation, pattern, source_label, drills, created_at,
+      srs_interval, srs_repetitions, srs_ease_factor, srs_due_date, srs_last_review, user_id)
+    VALUES (
+      ${concept.id}, ${concept.title}, ${concept.explanation}, ${concept.pattern},
+      ${concept.sourceLabel}, ${JSON.stringify(concept.drills)}, ${concept.createdAt},
+      ${concept.srs.interval}, ${concept.srs.repetitions}, ${concept.srs.easeFactor},
+      ${concept.srs.dueDate}, ${concept.srs.lastReview}, ${userId}
+    )
+    ON CONFLICT (id) DO UPDATE SET
+      title = EXCLUDED.title,
+      explanation = EXCLUDED.explanation,
+      pattern = EXCLUDED.pattern,
+      source_label = EXCLUDED.source_label,
+      drills = EXCLUDED.drills,
+      srs_interval = EXCLUDED.srs_interval,
+      srs_repetitions = EXCLUDED.srs_repetitions,
+      srs_ease_factor = EXCLUDED.srs_ease_factor,
+      srs_due_date = EXCLUDED.srs_due_date,
+      srs_last_review = EXCLUDED.srs_last_review,
+      user_id = EXCLUDED.user_id
+  `
+}
+
+export async function dbDeleteConcept(id: string, userId: string): Promise<void> {
+  const db = sql()
+  await db`DELETE FROM concepts WHERE id = ${id} AND user_id = ${userId}`
+}
+
 // ── Context cache ─────────────────────────────────────────────────────────────
 
 export async function dbGetCardContext(id: string, userId: string): Promise<string | null> {
@@ -132,6 +171,25 @@ function rowToCard(row: Record<string, unknown>): VocabCard {
     english: row.english as string,
     example: row.example as string,
     sessionId: (row.session_id as string) ?? "",
+    createdAt: Number(row.created_at),
+    srs: {
+      interval: Number(row.srs_interval),
+      repetitions: Number(row.srs_repetitions),
+      easeFactor: Number(row.srs_ease_factor),
+      dueDate: Number(row.srs_due_date),
+      lastReview: Number(row.srs_last_review),
+    },
+  }
+}
+
+function rowToConcept(row: Record<string, unknown>): Concept {
+  return {
+    id: row.id as string,
+    title: row.title as string,
+    explanation: row.explanation as string,
+    pattern: row.pattern as string,
+    sourceLabel: row.source_label as string,
+    drills: (typeof row.drills === "string" ? JSON.parse(row.drills) : row.drills) ?? [],
     createdAt: Number(row.created_at),
     srs: {
       interval: Number(row.srs_interval),

@@ -27,7 +27,7 @@ export function initialSRS(): SRSData {
   }
 }
 
-export function scheduleCard(card: VocabCard, grade: SRSGrade): VocabCard {
+export function scheduleCard<T extends { srs: SRSData }>(card: T, grade: SRSGrade): T {
   const now = Date.now()
   const srs = { ...card.srs }
 
@@ -52,7 +52,7 @@ export function scheduleCard(card: VocabCard, grade: SRSGrade): VocabCard {
   return { ...card, srs }
 }
 
-export function isDue(card: VocabCard): boolean {
+export function isDue(card: { srs: SRSData }): boolean {
   return card.srs.dueDate <= Date.now()
 }
 
@@ -82,10 +82,10 @@ export function getDueCards(cards: VocabCard[]): VocabCard[] {
  * - All overdue reviews (repetitions > 0, dueDate <= now)
  * - Up to (NEW_CARDS_PER_DAY - newCardsSeenToday) new cards
  */
-export function buildQueue(
-  cards: VocabCard[],
+export function buildQueue<T extends { srs: SRSData }>(
+  cards: T[],
   newCardsSeenToday: number
-): { queue: VocabCard[]; newSlots: number } {
+): { queue: T[]; newSlots: number } {
   const now = Date.now()
   const reviews = cards
     .filter((c) => c.srs.repetitions > 0 && c.srs.dueDate <= now)
@@ -97,6 +97,20 @@ export function buildQueue(
     .slice(0, newSlots)
 
   return { queue: [...reviews, ...newCards], newSlots }
+}
+
+/**
+ * Build a review queue with no daily new-item cap: all overdue reviews plus
+ * all never-seen items. Suited to small, curated pools (e.g. concepts) where
+ * throttling new items per day isn't necessary.
+ */
+export function buildUncappedQueue<T extends { srs: SRSData }>(items: T[]): T[] {
+  const now = Date.now()
+  const reviews = items
+    .filter((c) => c.srs.repetitions > 0 && c.srs.dueDate <= now)
+    .sort((a, b) => a.srs.dueDate - b.srs.dueDate)
+  const newItems = items.filter((c) => c.srs.repetitions === 0)
+  return [...reviews, ...newItems]
 }
 
 /**

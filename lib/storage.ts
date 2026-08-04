@@ -1,4 +1,4 @@
-import type { VocabCard, StudySession } from "./types"
+import type { VocabCard, StudySession, Concept } from "./types"
 
 // ── Cards ─────────────────────────────────────────────────────────────────────
 
@@ -74,6 +74,25 @@ export async function upsertSession(session: StudySession): Promise<void> {
 
 export async function deleteSession(id: string): Promise<void> {
   await fetch(`/api/sessions/${id}`, { method: "DELETE" })
+}
+
+// ── Concepts ──────────────────────────────────────────────────────────────────
+
+export async function getAllConcepts(): Promise<Concept[]> {
+  const res = await fetch("/api/concepts")
+  return res.json()
+}
+
+export async function upsertConcept(concept: Concept): Promise<void> {
+  await fetch("/api/concepts", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(concept),
+  })
+}
+
+export async function deleteConcept(id: string): Promise<void> {
+  await fetch(`/api/concepts/${id}`, { method: "DELETE" })
 }
 
 // ── localStorage migration helper ─────────────────────────────────────────────

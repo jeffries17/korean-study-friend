@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { BookOpen, Upload, List, Flame, Plus, Mail, Dumbbell } from "lucide-react"
+import { BookOpen, Upload, List, Flame, Plus, Mail, Dumbbell, GraduationCap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -13,29 +13,37 @@ import { TopikProgress } from "@/components/TopikProgress"
 import { Milestones } from "@/components/Milestones"
 import { NewWordsProgress } from "@/components/NewWordsProgress"
 import { MigrateButton } from "@/components/MigrateButton"
-import { getAllCards, getAllSessions, getReviewLog, type ReviewLog } from "@/lib/storage"
+import { getAllCards, getAllSessions, getAllConcepts, getReviewLog, type ReviewLog } from "@/lib/storage"
 import { dueCount, getLearnedCount, getStruggleCards } from "@/lib/srs"
 import { getStreak, getLongestStreak, getReviewsThisWeek } from "@/lib/stats"
-import type { StudySession, VocabCard } from "@/lib/types"
+import type { StudySession, VocabCard, Concept } from "@/lib/types"
 
 export default function DashboardPage() {
   const [cards, setCards] = useState<VocabCard[]>([])
   const [sessions, setSessions] = useState<StudySession[]>([])
+  const [concepts, setConcepts] = useState<Concept[]>([])
   const [log, setLog] = useState<ReviewLog>({})
   const [sendingReminder, setSendingReminder] = useState(false)
   const [reminderMsg, setReminderMsg] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
-      const [c, s, l] = await Promise.all([getAllCards(), getAllSessions(), getReviewLog()])
+      const [c, s, con, l] = await Promise.all([
+        getAllCards(),
+        getAllSessions(),
+        getAllConcepts(),
+        getReviewLog(),
+      ])
       setCards(c)
       setSessions(s)
+      setConcepts(con)
       setLog(l)
     }
     load()
   }, [])
 
   const due = dueCount(cards)
+  const conceptsDue = concepts.filter((c) => c.srs.dueDate <= Date.now()).length
   const struggleCount = getStruggleCards(cards).length
   const todayStart = new Date().setHours(0, 0, 0, 0)
   const addedToday = cards.filter((c) => c.createdAt >= todayStart).length
@@ -107,6 +115,34 @@ export default function DashboardPage() {
       {/* New words progress */}
       <NewWordsProgress addedToday={addedToday} />
 
+      {/* Concepts due */}
+      {concepts.length > 0 && (
+        <Card className={conceptsDue > 0 ? "border-primary/40" : ""}>
+          <CardContent className="flex items-center justify-between py-4">
+            <div className="flex items-center gap-3">
+              <div className="rounded-full bg-primary/10 p-2">
+                <GraduationCap className={`h-4 w-4 ${conceptsDue > 0 ? "text-primary" : "text-muted-foreground"}`} />
+              </div>
+              <div>
+                <p className="font-semibold text-sm">
+                  {conceptsDue > 0 ? `${conceptsDue} concept${conceptsDue !== 1 ? "s" : ""} due` : "Concepts up to date"}
+                </p>
+                <p className="text-xs text-muted-foreground">{concepts.length} grammar concepts</p>
+              </div>
+            </div>
+            <Button
+              nativeButton={false}
+              render={<Link href="/concepts/review" />}
+              variant="outline"
+              size="sm"
+              disabled={conceptsDue === 0}
+            >
+              Practice
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Struggle practice */}
       {struggleCount > 0 && (
         <Card>
@@ -156,6 +192,11 @@ export default function DashboardPage() {
           <List className="h-5 w-5" />
           <span className="text-sm font-medium">All Vocabulary</span>
           <span className="text-[11px] text-muted-foreground">{cards.length} cards saved</span>
+        </Button>
+        <Button nativeButton={false} render={<Link href="/concepts" />} variant="outline" className="h-auto py-4 flex-col gap-1 col-span-2">
+          <GraduationCap className="h-5 w-5" />
+          <span className="text-sm font-medium">Concepts</span>
+          <span className="text-[11px] text-muted-foreground">{concepts.length} grammar concepts saved</span>
         </Button>
       </div>
 
