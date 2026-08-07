@@ -99,18 +99,40 @@ export function buildQueue<T extends { srs: SRSData }>(
   return { queue: [...reviews, ...newCards], newSlots }
 }
 
+/** Max drill reps per concept per session, for concepts due for review */
+export const MAX_DRILLS_PER_CONCEPT = 2
+
+/** Max total items in a concept review session */
+export const CONCEPT_QUEUE_CAP = 25
+
 /**
- * Build a review queue with no daily new-item cap: all overdue reviews plus
- * all never-seen items. Suited to small, curated pools (e.g. concepts) where
- * throttling new items per day isn't necessary.
+ * Build a concept review queue: no daily new-item cap (small, curated pool),
+ * but concepts due for review can appear up to MAX_DRILLS_PER_CONCEPT times
+ * (one per drill) so multi-drill concepts get exercised, round-robined so
+ * the same concept doesn't repeat back-to-back. Never-seen concepts appear
+ * once each. The whole queue is capped at CONCEPT_QUEUE_CAP items.
  */
-export function buildUncappedQueue<T extends { srs: SRSData }>(items: T[]): T[] {
+export function buildConceptQueue<T extends { id: string; srs: SRSData; drills: unknown[] }>(
+  items: T[]
+): string[] {
   const now = Date.now()
   const reviews = items
     .filter((c) => c.srs.repetitions > 0 && c.srs.dueDate <= now)
     .sort((a, b) => a.srs.dueDate - b.srs.dueDate)
   const newItems = items.filter((c) => c.srs.repetitions === 0)
-  return [...reviews, ...newItems]
+
+  const repsFor = (c: T) => Math.min(MAX_DRILLS_PER_CONCEPT, Math.max(1, c.drills.length))
+  const maxReps = reviews.reduce((max, c) => Math.max(max, repsFor(c)), 0)
+
+  const ids: string[] = []
+  for (let round = 0; round < maxReps; round++) {
+    for (const c of reviews) {
+      if (round < repsFor(c)) ids.push(c.id)
+    }
+  }
+  for (const c of newItems) ids.push(c.id)
+
+  return ids.slice(0, CONCEPT_QUEUE_CAP)
 }
 
 /**

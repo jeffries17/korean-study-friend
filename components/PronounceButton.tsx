@@ -2,6 +2,7 @@
 
 import { Volume2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { speak } from "@/lib/tts"
 
 interface PronounceButtonProps {
   text: string
@@ -10,11 +11,7 @@ interface PronounceButtonProps {
 export function PronounceButton({ text }: PronounceButtonProps) {
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!("speechSynthesis" in window)) return
-    window.speechSynthesis.cancel()
-    const utter = new SpeechSynthesisUtterance(text)
-    utter.lang = "ko-KR"
-    window.speechSynthesis.speak(utter)
+    speak(text)
   }
 
   return (

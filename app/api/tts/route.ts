@@ -2,10 +2,10 @@ import OpenAI from "openai"
 
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_API_KEY })
 
-export async function POST(req: Request) {
-  const { text } = await req.json()
+export async function GET(req: Request) {
+  const text = new URL(req.url).searchParams.get("text")
 
-  if (!text || typeof text !== "string") {
+  if (!text) {
     return Response.json({ error: "text is required" }, { status: 400 })
   }
 
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     return new Response(buffer, {
       headers: {
         "Content-Type": "audio/mpeg",
-        "Cache-Control": "public, max-age=86400",
+        "Cache-Control": "public, max-age=31536000, immutable",
       },
     })
   } catch (e) {

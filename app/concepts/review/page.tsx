@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { ConceptCard } from "@/components/ConceptCard"
 import { SRSControls } from "@/components/SRSControls"
 import { getAllConcepts, upsertConcept } from "@/lib/storage"
-import { buildUncappedQueue, scheduleCard } from "@/lib/srs"
+import { buildConceptQueue, scheduleCard } from "@/lib/srs"
 import type { Concept, ConceptDrill, SRSGrade } from "@/lib/types"
 
 function randomDrill(concept: Concept): ConceptDrill {
@@ -16,7 +16,8 @@ function randomDrill(concept: Concept): ConceptDrill {
 }
 
 export default function ConceptReviewPage() {
-  const [queue, setQueue] = useState<Concept[]>([])
+  const [queue, setQueue] = useState<string[]>([])
+  const [conceptsById, setConceptsById] = useState<Record<string, Concept>>({})
   const [reviewed, setReviewed] = useState(0)
   const [answeredCorrect, setAnsweredCorrect] = useState<boolean | null>(null)
   const [loading, setLoading] = useState(true)
@@ -25,15 +26,16 @@ export default function ConceptReviewPage() {
   useEffect(() => {
     async function load() {
       const concepts = await getAllConcepts()
-      const q = buildUncappedQueue(concepts)
+      const q = buildConceptQueue(concepts)
       total.current = q.length
       setQueue(q)
+      setConceptsById(Object.fromEntries(concepts.map((c) => [c.id, c])))
       setLoading(false)
     }
     load()
   }, [])
 
-  const current = queue[0]
+  const current = conceptsById[queue[0]]
   const drill = useMemo(() => (current ? randomDrill(current) : null), [current])
 
   const grade = useCallback(
@@ -41,6 +43,7 @@ export default function ConceptReviewPage() {
       if (!current) return
       const updated = scheduleCard(current, g)
       await upsertConcept(updated)
+      setConceptsById((m) => ({ ...m, [updated.id]: updated }))
       setReviewed((n) => n + 1)
       setAnsweredCorrect(null)
       setQueue((q) => q.slice(1))
