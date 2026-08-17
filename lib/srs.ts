@@ -9,7 +9,7 @@ export const DAY_MS = 86_400_000
 export const LEARNED_INTERVAL = 21
 
 /** Max new (unseen) cards introduced per day */
-export const NEW_CARDS_PER_DAY = 20
+export const NEW_CARDS_PER_DAY = 40
 
 /** Target new words per day to learn at a steady pace */
 export const NEW_WORDS_GOAL = 12

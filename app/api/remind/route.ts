@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer"
 import { dbGetAllCards, dbGetReviewLog } from "@/lib/db"
-import { getDueCards, getStruggleCards, NEW_WORDS_GOAL } from "@/lib/srs"
+import { dueCount, getDueCards, getStruggleCards, NEW_WORDS_GOAL } from "@/lib/srs"
 import { getStreak } from "@/lib/stats"
 
 export async function GET() {
@@ -26,7 +26,7 @@ async function send() {
 
   const streak = getStreak(log)
   const dueCards = getDueCards(cards)
-  const dueTotal = dueCards.length
+  const dueTotal = dueCount(cards)
   const struggleCount = getStruggleCards(cards).length
   const todayStart = new Date().setHours(0, 0, 0, 0)
   const addedToday = cards.filter((c) => c.createdAt >= todayStart).length
