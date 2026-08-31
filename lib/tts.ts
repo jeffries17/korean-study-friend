@@ -22,11 +22,15 @@ function speakWithBrowserTTS(text: string, lang: string, onStart?: () => void, o
  * platforms), falling back to the browser's speechSynthesis if the request
  * or playback fails. Returns a function that stops playback.
  */
+let stopCurrent: (() => void) | null = null
+
 export function speak(
   text: string,
   lang = "ko-KR",
   opts: { onStart?: () => void; onEnd?: () => void } = {}
 ): () => void {
+  stopCurrent?.()
+
   const { onStart, onEnd } = opts
   let stopped = false
 
@@ -40,11 +44,13 @@ export function speak(
     if (!stopped) speakWithBrowserTTS(text, lang, onStart, onEnd)
   })
 
-  return () => {
+  const stop = () => {
     stopped = true
     audio.pause()
     if (isTTSAvailable()) window.speechSynthesis.cancel()
   }
+  stopCurrent = stop
+  return stop
 }
 
 /** Wait for voices to load (they load async in some browsers) */
